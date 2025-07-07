@@ -5,63 +5,79 @@ const TARGET_HOST = '3.69.165.120';
 const TARGET_PORT = 443;
 const PROXY_PORT = process.env.PORT || 443;
 
-// Create TCP proxy server
+console.log('Starting VPN Proxy Server...');
+console.log(`Target: ${TARGET_HOST}:${TARGET_PORT}`);
+console.log(`Listening on port: ${PROXY_PORT}`);
+
+// Create a raw TCP server that forwards all traffic
 const server = net.createServer((clientSocket) => {
-  console.log('Client connected:', clientSocket.remoteAddress);
+  console.log(`New connection from: ${clientSocket.remoteAddress}:${clientSocket.remotePort}`);
   
-  // Connect to Frankfurt server
-  const serverSocket = tls.connect({
-    host: TARGET_HOST,
-    port: TARGET_PORT,
-    servername: 'www.googleapis.com', // SNI for REALITY
-    rejectUnauthorized: false // Allow self-signed certs
-  }, () => {
+  // Create connection to Frankfurt server
+  const serverSocket = new net.Socket();
+  
+  serverSocket.connect(TARGET_PORT, TARGET_HOST, () => {
     console.log('Connected to Frankfurt server');
     
-    // Pipe data between client and server
-    clientSocket.pipe(serverSocket);
-    serverSocket.pipe(clientSocket);
+    // Start forwarding data in both directions
+    clientSocket.pipe(serverSocket, { end: false });
+    serverSocket.pipe(clientSocket, { end: false });
+    
+    // Handle client socket events
+    clientSocket.on('close', () => {
+      console.log('Client disconnected');
+      serverSocket.destroy();
+    });
+    
+    clientSocket.on('error', (err) => {
+      console.error('Client error:', err.message);
+      serverSocket.destroy();
+    });
+    
+    // Handle server socket events
+    serverSocket.on('close', () => {
+      console.log('Server disconnected');
+      clientSocket.destroy();
+    });
+    
+    serverSocket.on('error', (err) => {
+      console.error('Server error:', err.message);
+      clientSocket.destroy();
+    });
   });
   
-  // Handle errors
+  // Handle connection errors
   serverSocket.on('error', (err) => {
-    console.error('Server socket error:', err);
-    clientSocket.destroy();
-  });
-  
-  clientSocket.on('error', (err) => {
-    console.error('Client socket error:', err);
-    serverSocket.destroy();
-  });
-  
-  // Handle disconnections
-  clientSocket.on('close', () => {
-    console.log('Client disconnected');
-    serverSocket.destroy();
-  });
-  
-  serverSocket.on('close', () => {
-    console.log('Server disconnected');
+    console.error('Failed to connect to Frankfurt server:', err.message);
     clientSocket.destroy();
   });
 });
 
-// Start the proxy server
+// Start the server
 server.listen(PROXY_PORT, '0.0.0.0', () => {
-  console.log(`TCP Proxy listening on port ${PROXY_PORT}`);
-  console.log(`Forwarding to ${TARGET_HOST}:${TARGET_PORT}`);
+  console.log(`VPN Proxy Server listening on port ${PROXY_PORT}`);
+  console.log('Ready to forward VLESS/REALITY traffic');
 });
 
 // Handle server errors
 server.on('error', (err) => {
-  console.error('Proxy server error:', err);
+  console.error('Server error:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('Shutting down proxy server...');
+  console.log('Shutting down...');
   server.close(() => {
-    console.log('Proxy server closed');
+    console.log('Server closed');
     process.exit(0);
   });
-}); 
+});
+
+process.on('SIGINT', () => {
+  console.log('Shutting down...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});

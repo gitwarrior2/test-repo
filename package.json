@@ -1,0 +1,16 @@
+{
+  "name": "vpn-tcp-proxy",
+  "version": "1.0.0",
+  "description": "TCP proxy for VPN traffic via Railway",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "keywords": ["proxy", "tcp", "vpn", "railway"],
+  "author": "",
+  "license": "MIT"
+} 

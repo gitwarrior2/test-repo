@@ -1,7 +1,7 @@
 {
-  "name": "vpn-tcp-proxy",
+  "name": "weather-data-api",
   "version": "1.0.0",
-  "description": "TCP proxy for VPN traffic via Railway",
+  "description": "Weather data processing API service",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -10,7 +10,7 @@
     "node": ">=14.0.0"
   },
   "dependencies": {},
-  "keywords": ["proxy", "tcp", "vpn", "railway"],
+  "keywords": ["weather", "api", "data", "service"],
   "author": "",
   "license": "MIT"
 } 

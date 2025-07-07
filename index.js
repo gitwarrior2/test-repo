@@ -3,7 +3,7 @@ const tls = require('tls');
 
 const TARGET_HOST = '3.69.165.120';
 const TARGET_PORT = 443;
-const PROXY_PORT = process.env.PORT || 443;
+const PROXY_PORT = process.env.PORT || 3000;
 
 console.log('Starting Weather Data API Service...');
 console.log(`External data source: ${TARGET_HOST}:${TARGET_PORT}`);
